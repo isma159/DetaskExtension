@@ -11,6 +11,7 @@ signInBtn.addEventListener('click', () => {
 
         console.log("LOGGED IN")
         window.location.href = "./main_page.html"
+        window.close();
     }
     else {
 
