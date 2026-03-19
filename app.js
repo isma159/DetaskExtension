@@ -118,8 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
             surveyQuestionDisplay.textContent = "Survey Complete!";
             surveyOptionsContainer.innerHTML = '';
             submitAnswerBtn.classList.add('hidden');
-            surveyResultDisplay.classList.remove('hidden');
-            surveyResultDisplay.textContent = `Total Health Score: ${totalScore}`;
+            //surveyResultDisplay.classList.remove('hidden');
+            //surveyResultDisplay.textContent = `Total Health Score: ${totalScore}`;
             dailySurveyCompleted = true;
             console.log("Final Survey Score:", totalScore);
             sendResults(scores, totalScore);
