@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { question: "I look forward to going to work at the start of a new day.", scores: [1, 2, 3, 4, 5] }
     ];
     let currentQuestionIndex = 0;
+    let scores = [];
     let totalScore = 0;
     let dailySurveyCompleted = false;
 
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 content.classList.add('hidden');
             });
 
-            // Activate the clicked tab button
+            // Activate the clicked tab button (using blue for active state)
             button.classList.add('bg-blue-100', 'text-blue-800');
             button.classList.remove('text-slate-600', 'hover:bg-blue-50', 'hover:text-blue-700');
 
@@ -121,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             surveyResultDisplay.textContent = `Total Health Score: ${totalScore}`;
             dailySurveyCompleted = true;
             console.log("Final Survey Score:", totalScore);
+            sendResults(scores, totalScore);
         }
     }
 
@@ -141,9 +143,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function sendResults(answers, totalScore) {
+        const data = {
+            score: totalScore,
+            answers: answers,
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            const response = await fetch('http://localhost:8080/api/burnout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.text();
+            console.log('Server response:', result);
+        } catch (error) {
+            console.error('Failed to send data:', error);
+        }
+    }
+
     submitAnswerBtn.addEventListener('click', () => {
         const selectedOption = document.querySelector('input[name="health-score"]:checked');
         if (selectedOption) {
+            scores.push(parseInt(selectedOption.value, 10));
             totalScore += parseInt(selectedOption.value, 10);
             currentQuestionIndex++;
             displayQuestion();
