@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const signInBtn = document.getElementById('signInBtn');
     const loginView = document.getElementById('login-view');
     const mainView = document.getElementById('main-view');
+    const pointCounter = document.getElementById('point-counter');
 
     // Survey elements
     const surveyQuestionDisplay = document.getElementById('survey-question-display');
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mainView.classList.remove('hidden');
             displayQuestion();
             updateSurveyProgressBar(); // Initialize progress bar after login
+            fetchTeamPoints(); // Fetch points after login
         });
     }
     // Tab switching logic
@@ -122,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             surveyQuestionDisplay.textContent = "Survey Complete!";
             surveyOptionsContainer.innerHTML = '';
             submitAnswerBtn.classList.add('hidden');
+            setPointCounter("Survey");
             /*surveyResultDisplay.classList.remove('hidden');
             surveyResultDisplay.textContent = `Total Health Score: ${totalScore}`; */
             dailySurveyCompleted = true;
@@ -213,9 +216,10 @@ document.addEventListener('DOMContentLoaded', () => {
         attendBtn.addEventListener('click', function () {
             if (attendBtn.textContent === 'Attend') {
                 attendBtn.textContent = 'Attending';
+                setPointCounter("Event");
                 attendBtn.className = 'ml-4 px-4 py-2 rounded-md bg-green-500 text-green-800 font-medium transition-colors';
             } else {
-                attendBtn.textContent = 'Attend';   
+                attendBtn.textContent = 'Attend';
                 attendBtn.className = 'ml-4 px-4 py-2 rounded-md bg-green-400 text-green-800 font-medium transition-colors hover:bg-green-500 focus:outline-none';
             }
         });
@@ -262,6 +266,85 @@ document.addEventListener('DOMContentLoaded', () => {
             errorMsg.textContent = 'Failed to load events.';
             eventsContent.appendChild(errorMsg);
         }
+    }
+
+    async function fetchTeamPoints() {
+        const currentPointsSpan = document.getElementById('current-points');
+        if (!currentPointsSpan) {
+            console.error("Point counter span not found.");
+            return;
+        }
+        try {
+            const response = await fetch('http://localhost:8080/api/v1/team-scores/total', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const res = await response.json(); // Expecting { totalPoints: number }
+            currentPointsSpan.textContent = res.totalPoints !== undefined ? res.totalPoints : 'N/A';
+        } catch (error) {
+            console.error('Failed to fetch team points:', error);
+            currentPointsSpan.textContent = 'Error';
+        }
+    }
+
+    async function setPointCounter(actionType) {
+
+        if (actionType == "Survey") {
+            try {
+
+                const data = {
+                    teamId: 1,
+                    points: 1,
+                };
+
+                const response = await fetch('http://localhost:8080/api/v1/team-scores/survey', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.text();
+                console.log('Server response:', result);
+                fetchTeamPoints(); // Refresh points after survey submission
+            }
+            catch (error) {
+                console.error('Failed to send data:', error);
+
+            }
+        }
+        else if (actionType == "Event") {
+            try {
+
+                const data = {
+                    teamId: 1,
+                    points: 5,
+                };
+
+                const response = await fetch('http://localhost:8080/api/v1/team-scores/attend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.text();
+                console.log('Server response:', result);
+                fetchTeamPoints(); // Refresh points after event attendance
+            }
+            catch (error) {
+                console.error('Failed to send data:', error);
+
+            }
+        }
+
     }
 
     submitAnswerBtn.addEventListener('click', () => {
