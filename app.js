@@ -67,6 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetContent = document.getElementById(`${targetTab}-content`);
             if (targetContent) {
                 targetContent.classList.remove('hidden');
+                // If the events tab is clicked, fetch events
+                if (targetTab === 'events') {
+                    fetchEvents();
+                }
                 /*if (targetTab === 'health') {
                     currentQuestionIndex = 0; // Reset survey
                     totalScore = 0;
@@ -118,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
             surveyQuestionDisplay.textContent = "Survey Complete!";
             surveyOptionsContainer.innerHTML = '';
             submitAnswerBtn.classList.add('hidden');
-            //surveyResultDisplay.classList.remove('hidden');
-            //surveyResultDisplay.textContent = `Total Health Score: ${totalScore}`;
+            /*surveyResultDisplay.classList.remove('hidden');
+            surveyResultDisplay.textContent = `Total Health Score: ${totalScore}`; */
             dailySurveyCompleted = true;
             console.log("Final Survey Score:", totalScore);
             sendResults(scores, totalScore);
@@ -163,6 +167,100 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Server response:', result);
         } catch (error) {
             console.error('Failed to send data:', error);
+        }
+    }
+
+    // Function to create an event component
+    function createEventComponent(event) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'mb-4 p-4 border rounded-lg shadow-sm bg-white flex items-center justify-between';
+
+        // Left: Event info
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'flex-1';
+
+        // Event Name
+        const name = document.createElement('div');
+        name.className = 'font-semibold text-black text-lg mb-1';
+        name.textContent = event.name || 'Untitled Event';
+
+        // Event Start Date
+        const startsAt = document.createElement('div');
+        startsAt.className = 'text-sm text-black mb-1';
+        startsAt.textContent = event.startsAt ? `Starts at: ${event.startsAt}` : '';
+
+        // Event Status
+        const status = document.createElement('div');
+        status.className = 'text-xs font-medium text-black mb-1';
+        status.textContent = event.status ? `Status: ${event.status}` : '';
+
+        // Event Description
+        const description = document.createElement('div');
+        description.className = 'text-sm text-black';
+        description.textContent = event.description || '';
+
+        infoDiv.appendChild(name);
+        if (event.startsAt) infoDiv.appendChild(startsAt);
+        if (event.status) infoDiv.appendChild(status);
+        if (event.description) infoDiv.appendChild(description);
+
+        // Right: Attend button
+        const attendBtn = document.createElement('button');
+
+        attendBtn.textContent = 'Attend';
+        attendBtn.className = 'ml-4 px-4 py-2 rounded-md bg-green-400 text-green-800 font-medium transition-colors hover:bg-green-500 focus:outline-none';
+
+        attendBtn.addEventListener('click', function () {
+            if (attendBtn.textContent === 'Attend') {
+                attendBtn.textContent = 'Attending';
+                attendBtn.className = 'ml-4 px-4 py-2 rounded-md bg-green-500 text-green-800 font-medium transition-colors';
+            } else {
+                attendBtn.textContent = 'Attend';   
+                attendBtn.className = 'ml-4 px-4 py-2 rounded-md bg-green-400 text-green-800 font-medium transition-colors hover:bg-green-500 focus:outline-none';
+            }
+        });
+
+        wrapper.appendChild(infoDiv);
+        wrapper.appendChild(attendBtn);
+
+        return wrapper;
+    }
+
+    // Function to retrieve JSON events from the backend and display them
+    async function fetchEvents() {
+        const eventsContent = document.getElementById('events-content');
+        // Remove old event components (but keep the heading and description)
+        while (eventsContent.children.length > 2) {
+            eventsContent.removeChild(eventsContent.lastChild);
+        }
+        try {
+            const response = await fetch('http://localhost:8080/api/v1/events', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const events = await response.json();
+            if (Array.isArray(events) && events.length > 0) {
+                events.forEach(event => {
+                    const eventComponent = createEventComponent(event);
+                    eventsContent.appendChild(eventComponent);
+                });
+            } else {
+                const noEvents = document.createElement('div');
+                noEvents.className = 'mt-4 text-slate-500';
+                noEvents.textContent = 'No events found.';
+                eventsContent.appendChild(noEvents);
+            }
+        } catch (error) {
+            console.error('Failed to fetch events:', error);
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'mt-4 text-red-600';
+            errorMsg.textContent = 'Failed to load events.';
+            eventsContent.appendChild(errorMsg);
         }
     }
 
